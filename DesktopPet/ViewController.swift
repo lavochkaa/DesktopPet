@@ -15,6 +15,7 @@ class ViewController: NSViewController {
         super.viewDidLoad()
         
         guard let skView = view as? SKView else { return }
+        skView.allowsTransparency = true
         
         let scene = PetScene(size: skView.bounds.size)
         scene.scaleMode = .resizeFill

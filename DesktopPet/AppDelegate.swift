@@ -15,6 +15,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
+        guard let window = NSApplication.shared.windows.first,
+              let screen = window.screen ?? NSScreen.main
+        else { return }
+        
+        window.styleMask = [.borderless]
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = false
+        window.level = .floating
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        
+        let screenFrame = screen.visibleFrame
+        let overlayHeight: CGFloat = 180
+        
+        window.setFrame(
+            NSRect(
+                x: screenFrame.minX,
+                y: screenFrame.minY,
+                width: screenFrame.width,
+                height: overlayHeight
+            ),
+            display: true
+        )
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
