@@ -9,6 +9,7 @@ import Cocoa
 import SpriteKit
 
 class ViewController: NSViewController {
+    private(set) var petScene: PetScene?
 
     override func viewDidLoad() {
         // Do any additional setup after loading the view.
@@ -16,13 +17,20 @@ class ViewController: NSViewController {
         
         guard let skView = view as? SKView else { return }
         skView.allowsTransparency = true
+    }
+    
+    func presentPetScene() {
+        guard let skView = view as? SKView else { return }
+        
+        skView.layoutSubtreeIfNeeded()
         
         let scene = PetScene(size: skView.bounds.size)
         scene.scaleMode = .resizeFill
         
-        skView.presentScene(scene)
+        petScene = scene
+        skView.presentScene(petScene)
     }
-
+    
     override var representedObject: Any? {
         didSet {
         // Update the view, if already loaded.

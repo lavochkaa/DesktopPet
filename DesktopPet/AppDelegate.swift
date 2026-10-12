@@ -9,9 +9,7 @@ import Cocoa
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
-
-    
-
+    private var mousePassThough: MousePassthroughController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application
@@ -27,17 +25,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
         
         let screenFrame = screen.visibleFrame
-        let overlayHeight: CGFloat = 180
+        window.setFrame(screenFrame, display: true)
         
-        window.setFrame(
-            NSRect(
-                x: screenFrame.minX,
-                y: screenFrame.minY,
-                width: screenFrame.width,
-                height: overlayHeight
-            ),
-            display: true
-        )
+        DispatchQueue.main.async{ [weak self, weak window] in
+            guard let self,
+                  let window,
+                  let ViewController = window.contentViewController as? ViewController
+            else { return }
+            
+            ViewController.presentPetScene()
+            
+            guard let scene = ViewController.petScene else { return }
+            
+            self.mousePassThough = MousePassthroughController(window: window, scene: scene)
+        }
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {

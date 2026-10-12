@@ -11,6 +11,38 @@ final class PetScene: SKScene {
     private var normalRoutine: SKAction?
     private var jumpFrames: [SKTexture] = []
     
+    var petFrameOnScreen: NSRect? {
+        guard let pet,
+              let skView = view,
+              let window = skView.window
+        else { return nil }
+        
+        let frame = pet.calculateAccumulatedFrame()
+        
+        let firstPointInView = skView.convert(
+            CGPoint(x: frame.minX, y: frame.minY), from: self
+        )
+        
+        let secondPointInView = skView.convert(
+            CGPoint(x: frame.maxX, y: frame.maxY), from: self
+        )
+        
+        let firstPointOnScreen = window.convertPoint(
+            toScreen: skView.convert(firstPointInView, to: nil)
+        )
+        
+        let secondPointOnScreen = window.convertPoint(
+            toScreen: skView.convert(secondPointInView, to: nil)
+        )
+        
+        return NSRect(
+            x: min(firstPointOnScreen.x, secondPointOnScreen.x),
+            y: min(firstPointOnScreen.y, secondPointOnScreen.y),
+            width: abs(secondPointOnScreen.x - firstPointOnScreen.x),
+            height: abs(secondPointOnScreen.y - firstPointOnScreen.y)
+        )
+    }
+    
     private func loadFrames(prefix: String, count: Int) -> [SKTexture] {
         (1...count).map { number in
             let name = String(format: "\(prefix)_%04d", number)
@@ -83,7 +115,7 @@ final class PetScene: SKScene {
             with: walkFrames,
             timePerFrame: 1.0 / 8.0
         )
-        let walkForTwoSeconds = SKAction.repeat(walkCycle, count: 2)
+        let walkForTwoSeconds = SKAction.repeat(walkCycle, count: 15)
         
         let blink = SKAction.animate(
             with: blinkFrames,
@@ -91,12 +123,12 @@ final class PetScene: SKScene {
         )
         
         let walkRight = SKAction.group([
-            SKAction.moveTo(x: rightEdge, duration: 2),
+            SKAction.moveTo(x: rightEdge, duration: 15),
             walkForTwoSeconds
         ])
         
         let walkLeft = SKAction.group([
-            SKAction.moveTo(x: leftEdge, duration: 2),
+            SKAction.moveTo(x: leftEdge, duration: 15),
             walkForTwoSeconds
         ])
         
