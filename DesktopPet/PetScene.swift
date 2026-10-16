@@ -7,50 +7,13 @@
 import SpriteKit
 
 final class PetScene: SKScene {
-    // Позже перенесу все в нормальную архитектуру
-    private enum BaseScene {
-        case idle
-        case walk
-        case stretch
-        case sleep
-    }
-    
-    private enum Direction {
-        case left
-        case right
-        
-        var xMultiplier: CGFloat {
-            switch self {
-                case .left: return -1
-                case .right: return 1
-            }
-        }
-    }
-    
-    private struct WalkPlan {
-        let direction: Direction
-        let targetX: CGFloat
-        let duration: TimeInterval
-    }
-    
-    private struct PetMeters {
-        var energy: Double = 60
-        var curiosity: Double = 50
-        var arousal: Double = 25
-        
-        mutating func applyCompletedWalk() {
-            energy = max(0, energy - 3)
-            curiosity = max(0, curiosity - 12)
-            arousal = min(100, arousal + 4)
-        }
-    }
     
     private var pet: SKSpriteNode?
     private var walkFrames: [SKTexture] = []
     
-    private var meters = PetMeters()
-    private var lastBaseScene: BaseScene?
-    private var interruptedWalk: WalkPlan?
+    private var meters = PetBehavior.Meters()
+    private var lastBaseScene: PetBehavior.BaseScene?
+    private var interruptedWalk: PetBehavior.WalkPlan?
     
     private var minWalkDistance: CGFloat = 96
     private var maxWalkDistance: CGFloat = 280
@@ -116,7 +79,7 @@ final class PetScene: SKScene {
      func makeShortWalkPlan:
      Выбирает направление ходьбы, считает ее, время и затем отправляет
      */
-    private func makeShortWalkPlan() -> WalkPlan? {
+    private func makeShortWalkPlan() -> PetBehavior.WalkPlan? {
         guard let pet else { return nil }
         
         // Получить безопасные границы экрана
@@ -124,7 +87,7 @@ final class PetScene: SKScene {
         let leftSafeEdge = petWidth / 2 + 8
         let rightSafeEdge = size.width - petWidth / 2 - 8
         
-        let direction: Direction
+        let direction: PetBehavior.Direction
         
         // Выбрать направление
         // У края всегда идти внутрь, а не пытаться выйти за экран
@@ -151,7 +114,7 @@ final class PetScene: SKScene {
         let duration = TimeInterval(actualDistance / walkSpeed)
         
         // Вернуть готовый WalkPlan.
-        return WalkPlan(
+        return PetBehavior.WalkPlan(
             direction: direction,
             targetX: targetX,
             duration: duration
@@ -166,7 +129,7 @@ final class PetScene: SKScene {
          → передвинуть питомца в targetX
          → вызвать finishWalk()
      */
-    private func runWalk(_ plan: WalkPlan) {
+    private func runWalk(_ plan: PetBehavior.WalkPlan) {
         guard let pet, !walkFrames.isEmpty else {
             return
         }
