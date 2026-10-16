@@ -10,6 +10,20 @@ import SpriteKit
 
 class ViewController: NSViewController {
     private(set) var petScene: PetScene?
+    private var mousePassthrough: MousePassthroughController?
+    private var hasStarted = false
+    
+    override func viewWillAppear() {
+        super.viewWillAppear()
+
+        view.window?.alphaValue = 0
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+
+        startPetIfNeeded()
+    }
 
     override func viewDidLoad() {
         // Do any additional setup after loading the view.
@@ -19,16 +33,30 @@ class ViewController: NSViewController {
         skView.allowsTransparency = true
     }
     
-    func presentPetScene() {
-        guard let skView = view as? SKView else { return }
-        
+    private func startPetIfNeeded() {
+        guard !hasStarted,
+              let skView = view as? SKView,
+              let window = view.window
+        else {
+            return
+        }
+
+        hasStarted = true
+
         skView.layoutSubtreeIfNeeded()
-        
+
         let scene = PetScene(size: skView.bounds.size)
         scene.scaleMode = .resizeFill
-        
+
         petScene = scene
         skView.presentScene(petScene)
+
+        mousePassthrough = MousePassthroughController(
+            window: window,
+            scene: scene
+        )
+
+        window.alphaValue = 1
     }
     
     override var representedObject: Any? {
