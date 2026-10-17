@@ -12,6 +12,7 @@ enum PetBehavior {
         case idle
         case walk
         case stretch
+        case blink
         case sleep
     }
 
@@ -37,7 +38,13 @@ enum PetBehavior {
         var energy: Double = 60
         var curiosity: Double = 50
         var arousal: Double = 25
-
+        
+        mutating func applyCompletedIdle() {
+            energy = max(0, energy + 1)
+            curiosity = max(0, curiosity + 2)
+            arousal = min(100, arousal - 3)
+        }
+        
         mutating func applyCompletedWalk() {
             energy = max(0, energy - 3)
             curiosity = max(0, curiosity - 12)

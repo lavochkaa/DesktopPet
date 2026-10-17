@@ -10,19 +10,38 @@ final class PetScene: SKScene {
     
     private var pet: SKSpriteNode?
     private var walkFrames: [SKTexture] = []
+    private var blinkFrames: [SKTexture] = []
     
     private var meters = PetBehavior.Meters()
     private var lastBaseScene: PetBehavior.BaseScene?
     private var interruptedWalk: PetBehavior.WalkPlan?
     
-    private var minWalkDistance: CGFloat = 96
-    private var maxWalkDistance: CGFloat = 280
-    private var walkSpeed: CGFloat = 26
+    private var blinkChance = 0.4 // Позже можно будет задать частоту моргания, например при низкой энергии
+    
+    private var minWalkDistance: CGFloat = 96 // Минимум, который pet может пройти
+    private var maxWalkDistance: CGFloat = 280 // Максимум, который pet может пройти
+    private var walkSpeed: CGFloat = 26 // Скорость ходьбы, возможно добавлю смену скорости, при повышении/понижении энергии
     
     private var normalRoutine: SKAction?
     
     private var jumpFrames: [SKTexture] = []
     
+    /*
+     Очень долго думал, как быть с таким набором переменных, ведь оставлять magic values неправильно, но и на каждую заводить новую -
+     не самый приятный для железа момент. Немного подумал и решил, что лучше просто положить их в static memory. Конечно больно на такое смотреть, но это пересчитывается раз в несколько десятков секунд, следовательно память сильно не используется ;(
+     */
+    private enum IdleTuning {
+        static let blinkChance = 0.6 // шанс
+        static let blinkFrameTime: TimeInterval = 1.0 / 8.0
+        static let initialWait: ClosedRange<TimeInterval> = 1.0...2.5
+        static let waitAfterBlink: ClosedRange<TimeInterval> = 0...0.5
+        static let waitWithoutBlink: ClosedRange<TimeInterval> = 0.5...1.0
+    }
+    
+    /*
+     MARK: - Pet On Screen
+     Позже добавлю коментарии в этому блоку
+    */
     var petFrameOnScreen: NSRect? {
         guard let pet,
               let skView = view,
@@ -56,27 +75,63 @@ final class PetScene: SKScene {
     }
     
     /*
-     func startIdle:
-     Функция старта первоначального спрайта 'ожидания'
+     MARK: - Idle
+     Функция старта первоначального спрайта 'ожидания', с возможным морганием
     */
     private func startIdle() {
         guard let pet else { return }
+
+        var idle: [SKAction] = [
+            .wait(forDuration: .random(in: IdleTuning.initialWait))
+        ]
+
+        if !blinkFrames.isEmpty, Double.random(in: 0..<1) < IdleTuning.blinkChance {
+            idle.append(.animate(with: blinkFrames, timePerFrame: IdleTuning.blinkFrameTime))
+            idle.append(.wait(forDuration: .random(in: IdleTuning.waitAfterBlink)))
+        } else {
+            idle.append(.wait(forDuration: .random(in: IdleTuning.waitWithoutBlink)))
+        }
+
+        idle.append(.run { [weak self] in self?.finishIdle() })
         
-        // Собирает анимацию, перед этим подождав 3 секунды
-        let idle = SKAction.sequence([
-            SKAction.wait(forDuration: 3),
-            SKAction.run { [weak self] in
-                self?.lastBaseScene = .idle
-                self?.startShortWalk()
-            }
-        ])
-        
-        // Запускаем анимацию
-        pet.run(idle, withKey: "idle")
+        pet.run(.sequence(idle), withKey: "idle")
     }
     
     /*
-     func makeShortWalkPlan:
+     func finishIdle:
+     Изменение весов, выбор следующего действия
+    */
+    private func finishIdle() {
+        guard let pet else { return }
+        
+        // Меняем веса
+        meters.applyCompletedIdle()
+        
+        // Запоминаем последне действие
+        lastBaseScene = .idle
+        
+        chooseNextBaseScene()
+    }
+    
+    /*
+    Пока не используется, может быть позже верну, если на то нужна будет анимация
+    
+    private func startBlink() {
+        guard let pet else { return }
+        
+        let frameDuration: TimeInterval = 1.0 / 8.0
+        
+        let blink = SKAction.sequence([
+            SKAction.animate(with: blinkFrames, timePerFrame: frameDuration),
+            SKAction.wait(forDuration: 1),
+        ])
+        
+        pet.run(blink, withKey: "blink")
+    }
+    */
+    
+    /*
+     MARK: - Walk
      Выбирает направление ходьбы, считает ее, время и затем отправляет
      */
     private func makeShortWalkPlan() -> PetBehavior.WalkPlan? {
@@ -122,18 +177,15 @@ final class PetScene: SKScene {
     }
     
     /*
-     func runWalk -> ничего не решает, просто запускает для:
-     WalkPlan
-         → повернуть спрайт
-         → запустить кадры ходьбы
-         → передвинуть питомца в targetX
-         → вызвать finishWalk()
-     */
+     func runWalk:
+     Ничего не решает, просто запускает для WalkPlan
+    */
     private func runWalk(_ plan: PetBehavior.WalkPlan) {
         guard let pet, !walkFrames.isEmpty else {
             return
         }
-
+        
+        // Повернуть спрайт
         let spriteScale = abs(pet.xScale)
         pet.xScale = plan.direction.xMultiplier * spriteScale
 
@@ -152,17 +204,19 @@ final class PetScene: SKScene {
         )
 
         let synchronizedDuration = TimeInterval(cycleCount) * cycleDuration
-
+        
+        // Запустить кадры ходьбы
         let walkAnimation = SKAction.repeat(
             walkCycle,
             count: cycleCount
         )
-
+        // Передвинуть питомца в targetX
         let movement = SKAction.moveTo(
             x: plan.targetX,
             duration: synchronizedDuration
         )
-
+        
+        // Вызвать finishWalk()
         let walk = SKAction.sequence([
             SKAction.group([movement, walkAnimation]),
             SKAction.run { [weak self] in
@@ -176,7 +230,7 @@ final class PetScene: SKScene {
     /*
      func startShortWalk:
      Является связующей функцией
-     */
+    */
     private func startShortWalk() {
         guard let plan = makeShortWalkPlan() else {
             chooseNextBaseScene()
@@ -207,9 +261,18 @@ final class PetScene: SKScene {
         chooseNextBaseScene()
     }
     
+    /*
+     MARK: - Choose next scene
+     Функция обработки и выбора возможных сценариев
+    */
     private func chooseNextBaseScene() {
         if lastBaseScene == .walk {
             startIdle()
+            return
+        }
+        
+        if lastBaseScene == .idle {
+            startShortWalk()
             return
         }
         
@@ -220,6 +283,10 @@ final class PetScene: SKScene {
         // 4. вызов startShortWalk(), startIdle(), startSleep() и так далее
     }
     
+    /*
+     MARK: - Load Frames
+     Расчет и загрузка кадров по массивам, скорее всего для оптимизации памяти вынесу это отдельно, чтоб расчет был после каждого действия, но еще не знаю как правильно должно быть. Учимся ;)
+    */
     private func loadFrames(prefix: String, count: Int) -> [SKTexture] {
         (1...count).map { number in
             let name = String(format: "\(prefix)_%04d", number)
@@ -273,22 +340,22 @@ final class PetScene: SKScene {
         
         self.jumpFrames = loadFrames(prefix: "jump", count: 10)
         walkFrames = loadFrames(prefix: "walk", count: 8)
-        let blinkFrames = loadFrames(prefix: "blink", count: 5)
+        blinkFrames = loadFrames(prefix: "blink", count: 5)
         
         let pet = SKSpriteNode(
-            texture: walkFrames[0]
+            texture: walkFrames.last
         )
         pet.name = "pet"
         pet.setScale(4)
         
         let leftEdge: CGFloat = 64
-        let rightEdge = size.width - 64
+        // let rightEdge = size.width - 64
         
         pet.position = CGPoint(x: leftEdge, y: pet.frame.height / 2)
         addChild(pet)
         self.pet = pet
         
-        startShortWalk()
+        startIdle()
         /*
         Временно закоментированно
 
