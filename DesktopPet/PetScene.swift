@@ -16,8 +16,6 @@ final class PetScene: SKScene {
     private var lastBaseScene: PetBehavior.BaseScene?
     private var interruptedWalk: PetBehavior.WalkPlan?
     
-    private var blinkChance = 0.4 // Позже можно будет задать частоту моргания, например при низкой энергии
-    
     private var minWalkDistance: CGFloat = 96 // Минимум, который pet может пройти
     private var maxWalkDistance: CGFloat = 280 // Максимум, который pet может пройти
     private var walkSpeed: CGFloat = 26 // Скорость ходьбы, возможно добавлю смену скорости, при повышении/понижении энергии
@@ -31,7 +29,7 @@ final class PetScene: SKScene {
      не самый приятный для железа момент. Немного подумал и решил, что лучше просто положить их в static memory. Конечно больно на такое смотреть, но это пересчитывается раз в несколько десятков секунд, следовательно память сильно не используется ;(
      */
     private enum IdleTuning {
-        static let blinkChance = 0.6 // шанс
+        static let blinkChance = 0.6 // Позже можно будет задать частоту моргания, например при низкой энергии
         static let blinkFrameTime: TimeInterval = 1.0 / 8.0
         static let initialWait: ClosedRange<TimeInterval> = 1.0...2.5
         static let waitAfterBlink: ClosedRange<TimeInterval> = 0...0.5

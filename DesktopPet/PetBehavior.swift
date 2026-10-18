@@ -40,9 +40,9 @@ enum PetBehavior {
         var arousal: Double = 25
         
         mutating func applyCompletedIdle() {
-            energy = max(0, energy + 1)
-            curiosity = max(0, curiosity + 2)
-            arousal = min(100, arousal - 3)
+            energy = min(100, energy + 1)
+            curiosity = min(100, curiosity + 2)
+            arousal = max(0, arousal - 3)
         }
         
         mutating func applyCompletedWalk() {
