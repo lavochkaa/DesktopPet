@@ -4,6 +4,9 @@
 # Local Codex instructions
 /AGENTS.md
 
+# Local archive
+/resourcesArchive
+
 # Xcode build products
 build/
 DerivedData/
