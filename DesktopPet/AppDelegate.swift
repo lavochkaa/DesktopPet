@@ -22,7 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.hasShadow = false
         window.isRestorable = false
         window.level = .floating
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary]
+        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         
         let screenFrame = screen.visibleFrame
         window.setFrame(screenFrame, display: true)
