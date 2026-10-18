@@ -1,4 +1,4 @@
-# DesktopPet
+<h1 align="center">DesktopPet</h1># DesktopPet
 
 <p align="center">
   <img src="assets/banner.gif" alt="DesktopPet banner" width="720" />
@@ -50,19 +50,24 @@ The design for the next version is documented in [`docs/superpowers/specs/2026-1
 ## Architecture
 
 ```text
-AppDelegate                  Configures the transparent, borderless floating window
-ViewController               Creates PetScene after the window is visible and owns click-through handling
-PetScene                     Owns SpriteKit nodes, actions, screen geometry, and click handling
-PetAnimations                Builds SpriteKit actions from animation plans
-PetFrames                    Loads textures and applies nearest-neighbor filtering
-PetScreen                    Converts the pet frame into screen coordinates for AppKit hit testing
-PetBehavior                  Defines behavior data: scenes, plans, directions, and meters
-PetBrain                     Builds the current idle/walk plans and applies completed-scene meter changes
-PetTuning                    Holds numeric animation and movement tuning values
-MousePassthroughController   Lets clicks pass through except near the pet
+DesktopPet/
+├── App/
+│   ├── AppDelegate.swift
+│   └── ViewController.swift
+├── Behavior/
+│   ├── PetBehavior.swift
+│   ├── PetBrain.swift
+│   └── PetTuning.swift
+├── Input/
+│   └── MousePassthroughController.swift
+└── Scene/
+    ├── PetScene.swift
+    ├── PetAnimations.swift
+    ├── PetFrames.swift
+    └── PetScreen.swift
 ```
 
-`PetScene` supplies the pet's current position and permitted walk bounds to `PetBrain`. This keeps SpriteKit and screen-layout details out of the behavior type.
+`App` configures the overlay. `Scene` owns SpriteKit and screen-layout details. `Behavior` contains the idle/walk decision loop and its data. `Input` handles click-through behavior.
 
 ## Assets
 
