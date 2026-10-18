@@ -231,11 +231,11 @@ final class PetScene: SKScene {
     */
     private func startShortWalk() {
         guard let plan = makeShortWalkPlan() else {
-            chooseNextBaseScene()
+            startIdle()          // Исправлена потенциальный stack overflow при chooseNextScene
             return
         }
-        interruptedWalk = plan
         
+        interruptedWalk = plan
         runWalk(plan)
     }
     
@@ -251,7 +251,7 @@ final class PetScene: SKScene {
         // Уменьшает энергию и любопытство
         meters.applyCompletedWalk()
         
-        // Запоминает, что последней сценой была прогулка.
+        // Запоминает, что последней сценой была прогулка
         lastBaseScene = .walk
         interruptedWalk = nil
         
@@ -264,14 +264,11 @@ final class PetScene: SKScene {
      Функция обработки и выбора возможных сценариев
     */
     private func chooseNextBaseScene() {
-        if lastBaseScene == .walk {
-            startIdle()
-            return
-        }
-        
-        if lastBaseScene == .idle {
+        switch lastBaseScene {
+        case .idle:
             startShortWalk()
-            return
+        case .walk, .stretch, .blink, .sleep, .none:
+            startIdle() // Исправлен ожидаемый баг рекурсии при nil, позже разнесу по кейсам
         }
         
         // Здесь позже:
