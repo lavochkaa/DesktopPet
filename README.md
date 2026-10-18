@@ -1,64 +1,68 @@
 # DesktopPet
 
-Небольшой пиксельный питомец для macOS. Он живёт поверх рабочего стола, ведёт себя спокойно и любопытно, иногда играет, реагирует на человека и не мешает обычной работе с компьютером.
+An autonomous pixel desktop pet for macOS, built with Swift, AppKit, and SpriteKit.
 
-Проект создаётся как учебный: здесь изучаются AppKit, SpriteKit, macOS window server, конечные автоматы, анимации и организация небольшого Swift-приложения.
+DesktopPet lives above the desktop, behaves calmly and curiously, occasionally plays, reacts to people, and stays out of the way during normal work.
 
-## Идея
+This is a learning project exploring AppKit, SpriteKit, the macOS window server, state machines, animation, and the structure of a small Swift application.
 
-Питомец — не просто декоративный объект. Со временем он должен стать локальным помощником без LLM: замечать безопасные системные сигналы, иметь характер и показывать понятные реакции. Сначала приоритет — качественно сделать его живым на экране; интеграции с приложениями, почтой, календарём и мессенджерами появятся только позже.
+## Vision
 
-Характер v1:
+The pet is not meant to be decoration alone. Over time, it should grow into a local assistant without an LLM: it can notice safe system signals, develop a recognizable personality, and show understandable reactions.
 
-- любопытный;
-- спокойный;
-- иногда игривый;
-- ненавязчивый и не блокирующий работу.
+The first priority is to make the pet feel alive on screen. Integrations with apps, email, calendars, and messengers come later.
 
-## Текущие возможности
+The v1 personality is:
 
-- прозрачное borderless-окно поверх рабочего стола;
-- click-through вне области питомца;
-- пиксельные текстуры SpriteKit с `nearest` filtering;
-- ожидание с вероятным морганием;
-- короткие прогулки влево и вправо с безопасными границами экрана;
-- синхронизация движения с полными циклами анимации ходьбы;
-- реакция-прыжок на клик;
-- базовые шкалы `energy`, `curiosity`, `arousal`.
+- curious;
+- calm;
+- occasionally playful;
+- unobtrusive and non-blocking.
 
-## Стек
+## Current features
 
-- Swift 5;
-- AppKit + SpriteKit;
-- Xcode;
-- Aseprite / Piskel-совместимые PNG-экспорты для кадров;
-- `NSWindow`, `SKView`, `SKScene`, `SKAction`, `NSStatusItem` в будущем.
+- A transparent borderless overlay window above the desktop.
+- Click-through behavior outside the pet's hit area.
+- Pixel-perfect SpriteKit textures using `nearest` filtering.
+- Idle behavior with a chance to blink.
+- Short walks left and right within safe screen bounds.
+- Movement synchronized to complete walk-animation cycles.
+- A jump reaction when the pet is clicked.
+- Base `energy`, `curiosity`, and `arousal` meters.
 
-## Архитектура
+## Tech stack
+
+- Swift 5
+- AppKit + SpriteKit
+- Xcode
+- Aseprite / Piskel-compatible PNG animation exports
+- `NSWindow`, `SKView`, `SKScene`, and `SKAction`
+
+## Architecture
 
 ```text
 AppDelegate
-  └─ настраивает прозрачное окно-оверлей
+  └─ Configures the transparent overlay window.
 
 ViewController
-  └─ создаёт PetScene, когда окно и SKView уже готовы
-  └─ хранит MousePassthroughController
+  └─ Creates PetScene once the window and SKView are ready.
+  └─ Owns MousePassthroughController.
 
 PetScene
-  └─ SpriteKit: спрайт, текстуры, SKAction, отображение и ввод
+  └─ SpriteKit layer: sprite, textures, SKAction, rendering, and input.
 
 PetBehavior
-  └─ чистые данные поведения: состояния, направление, WalkPlan, шкалы
+  └─ Pure behavior data: states, direction, WalkPlan, and meters.
 
 MousePassthroughController
-  └─ пропускает клики мимо окна, кроме области вокруг питомца
+  └─ Lets clicks pass through the window except near the pet.
 ```
 
-Подробный проект «мозга» питомца находится в [docs/superpowers/specs/2026-10-16-pet-brain-design.md](docs/superpowers/specs/2026-10-16-pet-brain-design.md).
+The detailed pet-brain design is available in [docs/superpowers/specs/2026-10-16-pet-brain-design.md](docs/superpowers/specs/2026-10-16-pet-brain-design.md).
 
-## Ресурсы
+## Assets
 
-Кадры находятся в `Assets.xcassets` и должны следовать шаблону:
+Animation frames live in `Assets.xcassets` and follow this naming pattern:
 
 ```text
 walk_0001 ... walk_0008
@@ -66,66 +70,78 @@ blink_0001 ... blink_0005
 jump_0001 ... jump_0010
 ```
 
-Питомец рисуется в 32×32 px и масштабируется в сцене. Для всех пиксельных текстур необходимо использовать `texture.filteringMode = .nearest`.
+The pet is drawn at 32×32 px and scaled in the scene. Pixel-art textures must use:
 
-## Поведение: направление развития
-
-Базовые сцены: `idle`, `walk`, `stretch`, `sleep`.
-
-Короткие реакции: `blink`, `happyJump`, `shyness`.
-
-Будущая система выбора строится так:
-
-```text
-событие или завершение сцены
-  → правила с высоким приоритетом
-  → доступные действия
-  → расчёт весов по шкалам и условиям
-  → weighted random
-  → план действия
-  → SpriteKit-анимация
+```swift
+texture.filteringMode = .nearest
 ```
 
-Шкалы ограничены диапазоном `0...100`:
+## Behavior direction
 
-- `energy` — запас сил;
-- `curiosity` — склонность исследовать;
-- `arousal` — уровень активности, а не положительная или отрицательная эмоция.
+Planned base scenes: `idle`, `walk`, `stretch`, and `sleep`.
 
-## Запуск и проверка
+Planned short reactions: `blink`, `happyJump`, and `shyness`.
 
-Открой `DesktopPet.xcodeproj` в Xcode и выбери схему `DesktopPet` → `My Mac`.
+The future decision pipeline is:
+
+```text
+event or scene completion
+  → high-priority rules
+  → available actions
+  → weight calculation from meters and conditions
+  → weighted random selection
+  → action plan
+  → SpriteKit animation
+```
+
+The meters are always clamped to `0...100`:
+
+- `energy`: available stamina;
+- `curiosity`: tendency to explore;
+- `arousal`: activity level, not positive or negative mood.
+
+## Build and run
+
+Open `DesktopPet.xcodeproj` in Xcode and choose the `DesktopPet` scheme with the `My Mac` destination.
 
 ```bash
-# Сборка
+# Build
 xcodebuild -project DesktopPet.xcodeproj -scheme DesktopPet -configuration Debug build
 
-# Тесты, когда они появятся
+# Run tests when they are implemented
 xcodebuild -project DesktopPet.xcodeproj -scheme DesktopPet test
 ```
 
-В Xcode: `Cmd+B` собирает проект, `Cmd+R` запускает, `Cmd+U` запускает тесты.
+In Xcode: `Cmd+B` builds, `Cmd+R` runs, and `Cmd+U` runs tests.
 
-После изменений поведения нужно вручную проверить: запуск без белого окна, click-through вне питомца, клик по питомцу, прогулку в обе стороны и остановку только после полного цикла кадров.
+After behavior changes, manually verify the following:
 
-## Границы v1
+1. The app launches without a white window.
+2. The overlay remains transparent.
+3. Clicks pass through outside the pet.
+4. Clicking the pet triggers a reaction.
+5. The pet walks in both directions, respects screen bounds, and stops only after a complete animation cycle.
 
-Пока вне рамок:
+## Out of scope for v1
 
-- LLM;
-- звук и физика;
-- настройки;
-- автозапуск;
-- многомониторность;
-- интеграции с почтой, календарём, Spotify и мессенджерами.
+- LLM features
+- Sound and physics
+- Settings
+- Launch at login
+- Multi-monitor support
+- Integrations with email, calendars, Spotify, or messengers
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 ## Git
 
-Коммиты должны быть небольшими и описывать законченное изменение на английском в повелительном наклонении, например:
+Keep commits small and focused. Use English imperative commit messages, for example:
 
 ```text
 Add blink animation
 Extract pet behavior types
 ```
 
-Не коммитить `DerivedData`, пользовательские настройки Xcode и секреты.
+Do not commit `DerivedData`, per-user Xcode settings, credentials, or secrets.
