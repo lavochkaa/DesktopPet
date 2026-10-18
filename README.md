@@ -1,99 +1,72 @@
-<h1 align="center">DesktopPet</h1>
+# DesktopPet
 
 <p align="center">
   <img src="assets/banner.gif" alt="DesktopPet banner" width="720" />
 </p>
 
 <p align="center">
-  <b>An autonomous pixel pet that lives on your macOS desktop.</b><br/>
-  Calm, curious, occasionally playful, and never in your way.
+  <b>A pixel pet rendered in a transparent macOS overlay.</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white" alt="Swift 5" />
-  <img src="https://img.shields.io/badge/platform-macOS-000000?logo=apple&logoColor=white" alt="macOS" />
-  <img src="https://img.shields.io/badge/AppKit-SpriteKit-blue" alt="AppKit + SpriteKit" />
+  <img src="https://img.shields.io/badge/platform-macOS%2026.5%2B-000000?logo=apple&logoColor=white" alt="macOS 26.5 or later" />
+  <img src="https://img.shields.io/badge/AppKit-SpriteKit-blue" alt="AppKit and SpriteKit" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
 </p>
 
----
+## Status
 
-## What is it?
+DesktopPet is an early learning project. The current app displays a single pixel pet in a borderless transparent window above the Dock. It idles, may blink, takes short walks, and jumps when clicked.
 
-DesktopPet is a tiny character that walks, blinks, and reacts to you right above your desktop. It has its own mood meters and a behavior system built from plain rules and weighted randomness. No LLM, no network, no tracking.
+The current behavior loop is deliberately small:
 
-It started as a learning project to dig into **AppKit**, **SpriteKit**, the **macOS window server**, **state machines**, and animation. It is slowly growing into a small local companion with a recognizable personality.
-
-> **Status:** early development. The core loop works and the personality is still growing.
-
-## Personality (v1)
-
-| Trait | What it means |
-| --- | --- |
-| Curious | Wanders and explores instead of standing still |
-| Calm | Slow, relaxed pacing, no sudden chaos |
-| Playful | Occasionally jumps or fidgets for no reason |
-| Unobtrusive | Never blocks clicks or demands attention |
-
-## Features
-
-- Transparent, borderless overlay window above the desktop
-- Click-through everywhere except the pet's own hit area
-- Pixel-perfect rendering with `nearest` texture filtering
-- Idle behavior with random blinking
-- Short walks left and right, kept within safe screen bounds
-- Movement synced to complete walk-animation cycles, so there are no mid-step stops
-- Jump reaction when you click the pet
-- Core meters: `energy`, `curiosity`, and `arousal`
-
-## How it thinks
-
-Behavior is not a hardcoded script. Each decision goes through a small pipeline:
-
-```mermaid
-flowchart LR
-    A[Event or scene completed] --> B[High-priority rules]
-    B --> C[Available actions]
-    C --> D[Weights from meters and conditions]
-    D --> E[Weighted random pick]
-    E --> F[Action plan]
-    F --> G[SpriteKit animation]
+```text
+idle → walk → idle
 ```
 
-Three meters, always clamped to `0...100`, shape the weights:
+Idle timing, blinking, walking direction, and walking distance are randomized. The behavior system does **not** yet use weighted scene selection.
 
-- **`energy`** is the available stamina.
-- **`curiosity`** is the tendency to explore.
-- **`arousal`** is the activity level (not good or bad mood).
+## Current features
 
-Planned scenes: `idle`, `walk`, `stretch`, `sleep`.
-Planned reactions: `blink`, `happyJump`, `shyness`.
+- Transparent, borderless floating window using the display's visible frame
+- Click-through outside an expanded hit area around the pet
+- Pixel-art rendering with `SKTexture.filteringMode = .nearest`
+- Idle animation with a random blink
+- Short walks in either direction
+- Walking range calculated from the SpriteKit scene and a hand-tuned Dock inset
+- Walk durations stretched to whole animation cycles, so a walk does not end mid-step
+- Jump animation when the pet is clicked
+- `energy`, `curiosity`, and `arousal` meters updated after completed idle and walk scenes
 
-Full design: [`docs/superpowers/specs/2026-10-16-pet-brain-design.md`](docs/superpowers/specs/2026-10-16-pet-brain-design.md)
+The project currently has no network calls, external integrations, tracking, or LLM features.
+
+## Behavior status
+
+`PetBrain` currently chooses only between `idle` and `walk`. The meters are stored and updated, but they do not yet influence the choice of the next scene.
+
+The design for the next version is documented in [`docs/superpowers/specs/2026-10-16-pet-brain-design.md`](docs/superpowers/specs/2026-10-16-pet-brain-design.md). It proposes weighted choices, `stretch` and `sleep` scenes, plus `shyness` and cooldown rules. Those parts are not implemented yet.
 
 ## Architecture
 
 ```text
-AppDelegate                 Configures the transparent overlay window
-ViewController              Creates PetScene once window and SKView are ready,
-                            owns MousePassthroughController
-PetScene                    SpriteKit layer: sprite, textures, SKAction, rendering, input
-PetBehavior                 Pure behavior data: states, direction, WalkPlan, meters
-MousePassthroughController  Lets clicks pass through except near the pet
+AppDelegate                  Configures the transparent, borderless floating window
+ViewController               Creates PetScene after the window is visible and owns click-through handling
+PetScene                     Owns SpriteKit nodes, actions, screen geometry, and click handling
+PetAnimations                Builds SpriteKit actions from animation plans
+PetFrames                    Loads textures and applies nearest-neighbor filtering
+PetScreen                    Converts the pet frame into screen coordinates for AppKit hit testing
+PetBehavior                  Defines behavior data: scenes, plans, directions, and meters
+PetBrain                     Builds the current idle/walk plans and applies completed-scene meter changes
+PetTuning                    Holds numeric animation and movement tuning values
+MousePassthroughController   Lets clicks pass through except near the pet
 ```
 
-Behavior logic (`PetBehavior`) is kept separate from rendering (`PetScene`), so the "brain" stays easy to reason about and test.
-
-## Tech stack
-
-- **Swift 5**
-- **AppKit** + **SpriteKit** (`NSWindow`, `SKView`, `SKScene`, `SKAction`)
-- **Xcode**
-- Aseprite / Piskel-compatible PNG animation exports
+`PetScene` supplies the pet's current position and permitted walk bounds to `PetBrain`. This keeps SpriteKit and screen-layout details out of the behavior type.
 
 ## Assets
 
-Frames live in `Assets.xcassets` and follow this naming pattern:
+Animation frames are stored in `DesktopPet/Assets.xcassets`:
 
 ```text
 walk_0001 ... walk_0008
@@ -101,7 +74,7 @@ blink_0001 ... blink_0005
 jump_0001 ... jump_0010
 ```
 
-The pet is drawn at **32×32 px** and scaled in the scene. Pixel-art textures must always use:
+The pet is drawn at 32×32 px and scaled in `PetScene`. Every loaded texture uses:
 
 ```swift
 texture.filteringMode = .nearest
@@ -109,40 +82,38 @@ texture.filteringMode = .nearest
 
 ## Build and run
 
+The project deployment target is macOS 26.5 and it uses Swift 5.
+
 Open `DesktopPet.xcodeproj` in Xcode, choose the `DesktopPet` scheme and the `My Mac` destination, then press `Cmd+R`.
 
 ```bash
 # Build
 xcodebuild -project DesktopPet.xcodeproj -scheme DesktopPet -configuration Debug build
 
-# Tests (once implemented)
+# Run the existing test target
 xcodebuild -project DesktopPet.xcodeproj -scheme DesktopPet test
 ```
 
-<details>
-<summary><b>Manual checklist after behavior changes</b></summary>
+The test target currently contains only Xcode's starter test. Behavior tests have not been written yet.
 
-1. The app launches without a white window.
-2. The overlay stays transparent.
-3. Clicks pass through everywhere except the pet.
-4. Clicking the pet triggers a reaction.
-5. The pet walks in both directions, respects screen bounds, and stops only after a complete animation cycle.
+## Manual check after a behavior change
 
-</details>
+1. Launch the app: the overlay should have no white background.
+2. Click outside the pet: the click should reach the app behind the overlay.
+3. Click the pet: it should play the jump animation and resume its loop.
+4. Watch a walk in both directions: it should remain inside the configured horizontal range and finish on an animation-cycle boundary.
 
 ## Roadmap
 
-**Vision:** grow from a desktop toy into a local assistant without an LLM that notices safe system signals, develops a personality, and shows understandable reactions. The first priority is making the pet feel alive on screen. App, email, calendar, and messenger integrations come later.
-
-- [x] Transparent overlay with click-through
-- [x] Idle, blink, walk, and click-jump
-- [x] Base meters (`energy`, `curiosity`, `arousal`)
-- [ ] Weighted decision pipeline
+- [x] Transparent overlay and click-through input
+- [x] Idle, blink, walk, and click-jump animations
+- [x] Base `energy`, `curiosity`, and `arousal` meters
+- [ ] Weighted scene selection driven by meters and context
 - [ ] `stretch` and `sleep` scenes
-- [ ] `shyness` reaction
-- [ ] Tests for `PetBehavior`
+- [ ] `shyness` reaction and cooldowns
+- [ ] Behavior tests
 
-**Out of scope for v1:** LLM features, sound and physics, settings, launch at login, multi-monitor support, and integrations with email, calendars, Spotify, or messengers.
+Out of scope for v1: LLM features, sound, physics, settings, launch at login, multi-monitor support, and integrations with email, calendars, Spotify, or messengers.
 
 ## Contributing
 
@@ -153,7 +124,7 @@ Add blink animation
 Extract pet behavior types
 ```
 
-Please don't commit `DerivedData`, per-user Xcode settings, credentials, or secrets.
+Do not commit `DerivedData`, per-user Xcode settings, credentials, or secrets.
 
 ## License
 
