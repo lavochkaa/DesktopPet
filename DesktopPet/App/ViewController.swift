@@ -1,14 +1,7 @@
-//
-//  ViewController.swift
-//  DesktopPet
-//
-//  Created by name space on 10/11/26.
-//
-
 import Cocoa
 import SpriteKit
 
-class ViewController: NSViewController {
+final class ViewController: NSViewController {
     private(set) var petScene: PetScene?
     private var mousePassthrough: MousePassthroughController?
     private var hasStarted = false
@@ -16,6 +9,7 @@ class ViewController: NSViewController {
     override func viewWillAppear() {
         super.viewWillAppear()
 
+        // The SpriteKit view receives its final size after the window appears.
         view.window?.alphaValue = 0
     }
 
@@ -26,13 +20,12 @@ class ViewController: NSViewController {
     }
 
     override func viewDidLoad() {
-        // Do any additional setup after loading the view.
         super.viewDidLoad()
-        
+
         guard let skView = view as? SKView else { return }
         skView.allowsTransparency = true
     }
-    
+
     private func startPetIfNeeded() {
         guard !hasStarted,
               let skView = view as? SKView,
@@ -42,6 +35,11 @@ class ViewController: NSViewController {
         }
 
         hasStarted = true
+
+        if let screen = window.screen ?? NSScreen.main {
+            // Keep this in sync with AppDelegate when the window changes screens.
+            window.setFrame(screen.visibleFrame, display: true)
+        }
 
         skView.layoutSubtreeIfNeeded()
 
@@ -58,13 +56,10 @@ class ViewController: NSViewController {
 
         window.alphaValue = 1
     }
-    
+
     override var representedObject: Any? {
         didSet {
-        // Update the view, if already loaded.
         }
     }
-
-
 }
 
