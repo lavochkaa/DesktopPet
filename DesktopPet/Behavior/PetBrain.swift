@@ -63,7 +63,7 @@ struct PetBrain {
         let requestedDistance = CGFloat.random(in: PetTuning.Walk.distance)
 
         let rawTargetX = x + direction.xMultiplier * requestedDistance
-        let targetX = min(max(rawTargetX, bounds.lowerBound), bounds.upperBound)
+        let targetX = rawTargetX.clamped(to: bounds)
 
         let actualDistance = abs(x - targetX)
 
@@ -77,5 +77,11 @@ struct PetBrain {
             targetX: targetX,
             duration: duration
         )
+    }
+}
+
+extension CGFloat {
+    func clamped(to range: ClosedRange<CGFloat>) -> CGFloat {
+        min(max(self, range.lowerBound), range.upperBound)
     }
 }
