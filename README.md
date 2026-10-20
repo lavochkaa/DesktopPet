@@ -1,4 +1,4 @@
-<h1 align="center">DesktopPet</h1># DesktopPet
+<h1 align="center">DesktopPet</h1>
 
 <p align="center">
   <img src="assets/banner.gif" alt="DesktopPet banner" width="720" />
@@ -13,6 +13,9 @@
   <img src="https://img.shields.io/badge/platform-macOS%2026.5%2B-000000?logo=apple&logoColor=white" alt="macOS 26.5 or later" />
   <img src="https://img.shields.io/badge/AppKit-SpriteKit-blue" alt="AppKit and SpriteKit" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
+  <a href="https://github.com/lavochkaa/DesktopPet/actions/workflows/ci.yml">
+    <img src="https://github.com/lavochkaa/DesktopPet/actions/workflows/ci.yml/badge.svg" alt="CI status" />
+  </a>
 </p>
 
 ## Status
