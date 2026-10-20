@@ -6,7 +6,12 @@ struct PetBrain {
     private(set) var activeWalk: PetBehavior.WalkPlan?
 
     /// Applies a base scene's meter delta only after its animation completes.
-    mutating func sceneFinished(_ scene: PetBehavior.BaseScene, x: CGFloat, bounds: ClosedRange<CGFloat>) -> PetBehavior.Decision {
+    mutating func sceneFinished<R: RandomNumberGenerator>(
+        _ scene: PetBehavior.BaseScene,
+        x: CGFloat,
+        bounds: ClosedRange<CGFloat>,
+        generator: inout R
+    ) -> PetBehavior.Decision {
         switch scene {
         case .idle:
             meters.applyCompletedIdle()
@@ -18,35 +23,43 @@ struct PetBrain {
         }
 
         lastBaseScene = scene
-        return chooseNextScene(x: x, bounds: bounds)
+        return chooseNextScene(x: x, bounds: bounds, generator: &generator)
     }
 
     // TODO: Replace the temporary idle/walk cycle with the weighted pipeline from the pet-brain spec.
-    mutating func chooseNextScene(x: CGFloat, bounds: ClosedRange<CGFloat>) -> PetBehavior.Decision {
+    mutating func chooseNextScene<R: RandomNumberGenerator>(
+        x: CGFloat,
+        bounds: ClosedRange<CGFloat>,
+        generator: inout R
+    ) -> PetBehavior.Decision {
         switch lastBaseScene {
         case .idle:
-            if let plan = makeWalkPlan(x: x, bounds: bounds) {
+            if let plan = makeWalkPlan(x: x, bounds: bounds, generator: &generator) {
                 activeWalk = plan
                 return .walk(plan)
             }
-            return .idle(makeIdlePlan())
+            return .idle(makeIdlePlan(generator: &generator))
         case .walk, .stretch, .sleep, .none:
-            return .idle(makeIdlePlan())
+            return .idle(makeIdlePlan(generator: &generator))
         }
     }
 
-    func makeIdlePlan() -> PetBehavior.IdlePlan {
-        let blink = Double.random(in: 0...1) < PetTuning.Idle.blinkChance
+    func makeIdlePlan<R: RandomNumberGenerator>(generator: inout R) -> PetBehavior.IdlePlan {
+        let blink = Double.random(in: 0...1, using: &generator) < PetTuning.Idle.blinkChance
         let tailRange = blink ? PetTuning.Idle.waitAfterBlink : PetTuning.Idle.waitWithoutBlink
 
         return PetBehavior.IdlePlan(
-            initialWait: .random(in: PetTuning.Idle.initialWait),
+            initialWait: .random(in: PetTuning.Idle.initialWait, using: &generator),
             blink: blink,
-            tailWait: .random(in: tailRange)
+            tailWait: .random(in: tailRange, using: &generator)
         )
     }
 
-    func makeWalkPlan(x: CGFloat, bounds: ClosedRange<CGFloat>) -> PetBehavior.WalkPlan? {
+    func makeWalkPlan<R: RandomNumberGenerator>(
+        x: CGFloat,
+        bounds: ClosedRange<CGFloat>,
+        generator: inout R
+    ) -> PetBehavior.WalkPlan? {
         let minDistance = PetTuning.Walk.distance.lowerBound
 
         let direction: PetBehavior.Direction
@@ -57,10 +70,10 @@ struct PetBrain {
         } else if x >= bounds.upperBound - minDistance {
             direction = .left
         } else {
-            direction = Bool.random() ? .left : .right
+            direction = Bool.random(using: &generator) ? .left : .right
         }
 
-        let requestedDistance = CGFloat.random(in: PetTuning.Walk.distance)
+        let requestedDistance = CGFloat.random(in: PetTuning.Walk.distance, using: &generator)
 
         let rawTargetX = x + direction.xMultiplier * requestedDistance
         let targetX = rawTargetX.clamped(to: bounds)
