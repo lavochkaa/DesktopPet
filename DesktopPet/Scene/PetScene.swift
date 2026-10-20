@@ -6,6 +6,7 @@ final class PetScene: SKScene {
     private(set) var pet: SKSpriteNode?
 
     private lazy var frames = PetFrames.load()
+    private var generator = SystemRandomNumberGenerator()
     private var brain = PetBrain()
     
     private enum ActionKey {
@@ -69,7 +70,8 @@ final class PetScene: SKScene {
         let decision = brain.sceneFinished(
             scene,
             x: pet.position.x,
-            bounds: walkBounds
+            bounds: walkBounds,
+            generator: &generator
         )
 
         perform(decision)
@@ -80,7 +82,8 @@ final class PetScene: SKScene {
 
         let decision = brain.chooseNextScene(
             x: pet.position.x,
-            bounds: walkBounds
+            bounds: walkBounds,
+            generator: &generator
         )
 
         perform(decision)
@@ -127,7 +130,8 @@ final class PetScene: SKScene {
 
         let decision = brain.chooseNextScene(
             x: pet.position.x,
-            bounds: walkBounds
+            bounds: walkBounds,
+            generator: &generator
         )
 
         perform(decision)
