@@ -14,15 +14,15 @@ enum PetBehavior {
         var arousal: Double = 25
 
         mutating func applyCompletedIdle() {
-            energy = min(100, energy + 1)
-            curiosity = min(100, curiosity + 2)
-            arousal = max(0, arousal - 3)
+            energy = (energy + 1).clamped(to: 0...100)
+            curiosity = (curiosity + 2).clamped(to: 0...100)
+            arousal = (arousal - 3).clamped(to: 0...100)
         }
 
         mutating func applyCompletedWalk() {
-            energy = max(0, energy - 3)
-            curiosity = max(0, curiosity - 12)
-            arousal = min(100, arousal + 4)
+            energy = (energy - 3).clamped(to: 0...100)
+            curiosity = (curiosity - 12).clamped(to: 0...100)
+            arousal = (arousal + 4).clamped(to: 0...100)
         }
     }
 
@@ -41,6 +41,7 @@ enum PetBehavior {
     enum Decision {
         case idle(IdlePlan)
         case walk(WalkPlan)
+        // case jump(JumpPlan)
     }
 
     struct IdlePlan {
@@ -55,5 +56,11 @@ enum PetBehavior {
         let duration: TimeInterval
     }
     // TODO: Add a jump plan to allow for future adjustments to length, height, etc.
-    struct JumpPlan {}
+    // struct JumpPlan {}
+}
+
+extension Double {
+    func clamped(to range: ClosedRange<Double>) -> Double {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
 }
