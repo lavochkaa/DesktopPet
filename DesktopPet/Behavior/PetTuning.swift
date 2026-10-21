@@ -29,4 +29,9 @@ nonisolated enum PetTuning {
         static let waitAfterBlink: ClosedRange<TimeInterval> = 0...0.5
         static let waitWithoutBlink: ClosedRange<TimeInterval> = 0.5...1.0
     }
+    
+    nonisolated enum Stretch {
+        static let cooldown: TimeInterval = 120.0
+        static let frameTime: TimeInterval = 1.0 / 8.0
+    }
 }
