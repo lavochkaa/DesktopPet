@@ -77,4 +77,16 @@ enum PetAnimations {
             .setTexture(rest, resize: false)
         ])
     }
+    
+    static func stretch(frames: [SKTexture], rest: SKTexture) -> SKAction {
+        guard !frames.isEmpty else { return .setTexture(rest, resize: false) }
+        
+        return .sequence([
+            .animate(
+                with: frames,
+                timePerFrame: PetTuning.Stretch.frameTime
+            ),
+            .setTexture(rest, resize: false)
+        ])
+    }
 }
