@@ -90,6 +90,10 @@ The pet is drawn at 32×32 px and scaled in `PetScene`. Every loaded texture use
 texture.filteringMode = .nearest
 ```
 
+Source frames, including animations that are still work in progress, live in
+the `resources/` working directory. Only `Assets.xcassets` is compiled into the
+app; `resources/` is kept for editing and is not referenced at runtime.
+
 ## Build and run
 
 The project deployment target is macOS 26.5 and it uses Swift 5.
