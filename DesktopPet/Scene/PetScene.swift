@@ -56,6 +56,9 @@ final class PetScene: SKScene {
         case .walk(let plan):
             scene = .walk
             action = PetAnimations.walk(plan, frames: frames.walk, rest: frames.rest)
+        case .stretch:
+            scene = .stretch
+            action = PetAnimations.stretch(frames: frames.stretch, rest: frames.rest)
         }
 
         pet.run(.sequence(
@@ -71,6 +74,7 @@ final class PetScene: SKScene {
             scene,
             x: pet.position.x,
             bounds: walkBounds,
+            time: Date(),
             generator: &generator
         )
 
@@ -83,7 +87,8 @@ final class PetScene: SKScene {
         let decision = brain.chooseNextScene(
             x: pet.position.x,
             bounds: walkBounds,
-            generator: &generator
+            generator: &generator,
+            time: Date()
         )
 
         perform(decision)
@@ -131,7 +136,8 @@ final class PetScene: SKScene {
         let decision = brain.chooseNextScene(
             x: pet.position.x,
             bounds: walkBounds,
-            generator: &generator
+            generator: &generator,
+            time: Date()
         )
 
         perform(decision)
