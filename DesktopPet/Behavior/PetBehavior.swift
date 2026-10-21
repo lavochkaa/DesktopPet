@@ -41,6 +41,7 @@ enum PetBehavior {
     enum Decision {
         case idle(IdlePlan)
         case walk(WalkPlan)
+        case stretch
         // case jump(JumpPlan)
     }
 
@@ -55,6 +56,7 @@ enum PetBehavior {
         let targetX: CGFloat
         let duration: TimeInterval
     }
+    
     // TODO: Add a jump plan to allow for future adjustments to length, height, etc.
     // struct JumpPlan {}
 }
