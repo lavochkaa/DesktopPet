@@ -4,6 +4,7 @@ struct PetFrames {
     let walk: [SKTexture]
     let blink: [SKTexture]
     let jump: [SKTexture]
+    let stretch: [SKTexture]
     let rest: SKTexture
 
     /// Loads every animation sequence before the scene starts running actions.
@@ -14,6 +15,7 @@ struct PetFrames {
             walk: walk,
             blink: loadFrames(prefix: "blink", count: 5),
             jump: loadFrames(prefix: "jump", count: 10),
+            stretch: loadFrames(prefix: "stretch", count: 10),
             rest: walk.last ?? loadTexture(named: "idle")
         )
     }
