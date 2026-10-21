@@ -20,15 +20,15 @@
 
 ## Status
 
-DesktopPet is an early learning project. The current app displays a single pixel pet in a borderless transparent window above the Dock. It idles, may blink, takes short walks, and jumps when clicked.
+DesktopPet is an early learning project. The current app displays a single pixel pet in a borderless transparent window above the Dock. It idles, may blink, takes short walks, stretches on a cooldown, and jumps when clicked.
 
 The current behavior loop is deliberately small:
 
 ```text
-idle → walk → idle
+idle → walk → idle → stretch → idle
 ```
 
-Idle timing, blinking, walking direction, and walking distance are randomized. The behavior system does **not** yet use weighted scene selection.
+Idle timing, blinking, walking direction, and walking distance are randomized. Stretch is offered on a 2-minute cooldown. The behavior system does **not** yet use weighted scene selection.
 
 ## Current features
 
@@ -39,6 +39,7 @@ Idle timing, blinking, walking direction, and walking distance are randomized. T
 - Short walks in either direction
 - Walking range calculated from the SpriteKit scene and a hand-tuned Dock inset
 - Walk durations stretched to whole animation cycles, so a walk does not end mid-step
+- Stretch animation offered after idle, gated by a 2-minute cooldown
 - Jump animation when the pet is clicked
 - `energy`, `curiosity`, and `arousal` meters updated after completed idle and walk scenes
 
@@ -46,7 +47,7 @@ The project currently has no network calls, external integrations, tracking, or 
 
 ## Behavior status
 
-`PetBrain` currently chooses only between `idle` and `walk`. The meters are stored and updated, but they do not yet influence the choice of the next scene.
+`PetBrain` currently chooses between `idle`, `walk`, and `stretch` (the latter gated by a cooldown, not by meters). The meters are stored and updated, but they do not yet influence the choice of the next scene.
 
 The design for the next version is documented in [`docs/superpowers/specs/2026-10-16-pet-brain-design.md`](docs/superpowers/specs/2026-10-16-pet-brain-design.md). It proposes weighted choices, `stretch` and `sleep` scenes, plus `shyness` and cooldown rules. Those parts are not implemented yet.
 
@@ -80,6 +81,7 @@ Animation frames are stored in `DesktopPet/Assets.xcassets`:
 walk_0001 ... walk_0008
 blink_0001 ... blink_0005
 jump_0001 ... jump_0010
+stretch_0001 ... stretch_0010
 ```
 
 The pet is drawn at 32×32 px and scaled in `PetScene`. Every loaded texture uses:
@@ -116,8 +118,9 @@ The test target currently contains only Xcode's starter test. Behavior tests hav
 - [x] Transparent overlay and click-through input
 - [x] Idle, blink, walk, and click-jump animations
 - [x] Base `energy`, `curiosity`, and `arousal` meters
+- [x] `stretch` scene with cooldown
 - [ ] Weighted scene selection driven by meters and context
-- [ ] `stretch` and `sleep` scenes
+- [ ] `sleep` scene
 - [ ] `shyness` reaction and cooldowns
 - [ ] Behavior tests
 
