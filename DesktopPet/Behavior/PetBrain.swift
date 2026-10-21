@@ -4,12 +4,14 @@ struct PetBrain {
     private(set) var meters = PetBehavior.Meters()
     private(set) var lastBaseScene: PetBehavior.BaseScene?
     private(set) var activeWalk: PetBehavior.WalkPlan?
+    private(set) var lastStretchDate: Date?
 
     /// Applies a base scene's meter delta only after its animation completes.
     mutating func sceneFinished<R: RandomNumberGenerator>(
         _ scene: PetBehavior.BaseScene,
         x: CGFloat,
         bounds: ClosedRange<CGFloat>,
+        time: Date,
         generator: inout R
     ) -> PetBehavior.Decision {
         switch scene {
@@ -18,28 +20,35 @@ struct PetBrain {
         case .walk:
             meters.applyCompletedWalk()
             activeWalk = nil
-        case .stretch, .sleep:
+        case .stretch:
+            lastStretchDate = time
+        case .sleep:
             break
         }
 
         lastBaseScene = scene
-        return chooseNextScene(x: x, bounds: bounds, generator: &generator)
+        return chooseNextScene(x: x, bounds: bounds, generator: &generator, time: time)
     }
 
     // TODO: Replace the temporary idle/walk cycle with the weighted pipeline from the pet-brain spec.
     mutating func chooseNextScene<R: RandomNumberGenerator>(
         x: CGFloat,
         bounds: ClosedRange<CGFloat>,
-        generator: inout R
+        generator: inout R,
+        time: Date
     ) -> PetBehavior.Decision {
         switch lastBaseScene {
-        case .idle:
+        case .idle, .stretch:
+            let stretchReady = lastStretchDate.map { time.timeIntervalSince($0) >= PetTuning.Stretch.cooldown } ?? true
+            if stretchReady {
+                return .stretch
+            }
             if let plan = makeWalkPlan(x: x, bounds: bounds, generator: &generator) {
                 activeWalk = plan
                 return .walk(plan)
             }
             return .idle(makeIdlePlan(generator: &generator))
-        case .walk, .stretch, .sleep, .none:
+        case .walk, .sleep, .none:
             return .idle(makeIdlePlan(generator: &generator))
         }
     }
