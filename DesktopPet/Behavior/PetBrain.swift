@@ -39,6 +39,7 @@ struct PetBrain {
     ) -> PetBehavior.Decision {
         switch lastBaseScene {
         case .idle, .stretch:
+            // Check operation: .map will skipped nil and operation ?? will return true
             let stretchReady = lastStretchDate.map { time.timeIntervalSince($0) >= PetTuning.Stretch.cooldown } ?? true
             if stretchReady {
                 return .stretch
